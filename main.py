@@ -8,11 +8,7 @@ test_images = '08_6_flat.jpg'
 shape = (64, 64)
 
 img = cv2.imread('/home/son/PycharmProjects/CSDLDPT/data/' + test_images)
-# Find out if the image is bright and adjust clip limit accordingly
-# The darker the shirt is the smaller clipLimit should be
 ft1 = extract_features(img, shape)
-# _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-
 
 # cv2.imshow("", img)
 # cv2.waitKey(0)
@@ -26,5 +22,4 @@ for image in images:
     i += 1
 
 print(images[dst.argsort()][1:11])
-"""['abcd (5).jpg' 'abcd (4).jpg' '4_6_flat.jpg' '25.jpg' 'j.jpg'
- '046_flat (2).jpg' 'l.jpg' 'nh (2).jpg' '27.jpg' '23.jpg']"""
+
