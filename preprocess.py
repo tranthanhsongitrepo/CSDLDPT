@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 
-def _hog(image):
-    winSize = (64, 64)
+def _hog(image, shape):
+    winSize = shape
     blockSize = (16, 16)
     blockStride = (8, 8)
     cellSize = (8, 8)
@@ -60,21 +60,9 @@ def _get_color_mean(image):
 
 
 def _pad_resize(image, shape):
-    height, width = image.shape[0], image.shape[1]
-
-    delta_w = shape[1] - width
-    delta_h = shape[0] - height
-    top, bottom = delta_h // 2, delta_h - (delta_h // 2)
-    left, right = delta_w // 2, delta_w - (delta_w // 2)
-
-    top = max(0, top)
-    bottom = max(0, bottom)
-    left = max(0, left)
-    right = max(0, right)
-
-    color = [0, 0]
-    image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)
     image = cv2.resize(image, (shape[1], shape[0]))
+    image = cv2.copyMakeBorder(image, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+
     return image
 
 
@@ -88,31 +76,14 @@ def extract_features(image, shape, name=""):
     obj_color_mean[1] = (obj_color_mean[1] + 86) / (98 + 86)
     obj_color_mean[2] = (obj_color_mean[2] + 107) / (107 + 94)
 
-    image = _pad_resize(image, shape)
-
-    # Find edges
-    # clipLimit should be high if the object is bright in color, you might want to formularies this
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    image1 = cv2.createCLAHE(clipLimit=image.mean() / 255, tileGridSize=(8, 8)).apply(gray)
-    image1 = cv2.GaussianBlur(image1, (3, 3), 0)
-    image1 = cv2.Canny(image1, 70, 100)
-
-    image2 = cv2.createCLAHE(clipLimit=1 / (image.mean() / 255), tileGridSize=(8, 8)).apply(gray)
-    image2 = cv2.GaussianBlur(image2, (3, 3), 0)
-    image2 = cv2.Canny(image2, 70, 100)
-
-    image = np.maximum(image1, image2)
     # Pad and resize to get the desired size
-    image[image >= 127] = 255
-    image[image < 127] = 0
+    image = _pad_resize(image, shape)
+    feature = np.vstack((obj_color_mean, _hog(image, shape)))
 
-    # cv2.imshow(name, image)
+    # cv2.imshow("Canny", image)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
-    feature = np.vstack((obj_color_mean, _hog(image)))
-
     return feature
-
 
 # def extract_features(X, shape):
 #     all_features = []

@@ -5,7 +5,7 @@ from preprocess import extract_features
 
 # reading the image
 test_images = '08_6_flat.jpg'
-shape = (224, 224)
+shape = (64, 64)
 
 img = cv2.imread('/home/son/PycharmProjects/CSDLDPT/data/' + test_images)
 # Find out if the image is bright and adjust clip limit accordingly
