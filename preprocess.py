@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 
-def _hog(image, shape):
-    winSize = shape
+def _hog(image):
+    winSize = (64, 64)
     blockSize = (16, 16)
     blockStride = (8, 8)
     cellSize = (8, 8)
@@ -16,13 +16,14 @@ def _hog(image, shape):
     L2HysThreshold = 2.0000000000000001e-01
     gammaCorrection = 0
     nlevels = 64
+    # image = cv2.GaussianBlur(image, (5, 5), 0)
+    # image = cv2.cvtColor(image, 0)
     hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, nbins, derivAperture, winSigma,
                             histogramNormType, L2HysThreshold, gammaCorrection, nlevels)
     winStride = (8, 8)
     padding = (8, 8)
     locations = ((10, 20),)
     hist = hog.compute(image, winStride, padding, locations)
-
     return hist
 
 
@@ -64,20 +65,15 @@ def extract_features(image, shape, name=""):
     image = _extract_object(image)
 
     # Đưa trung bình 3 kênh màu  về cùng 1 khoảng
-    obj_color_mean = _get_color_mean(image)
-    obj_color_mean[0] /= 100
-    obj_color_mean[1] = (obj_color_mean[1] + 86) / (98 + 86)
-    obj_color_mean[2] = (obj_color_mean[2] + 107) / (107 + 94)
+    obj_color_mean = _get_color_mean(image) / 255
 
     # Resize về cùng một cỡ và đệm 1 vòng pixel 0 bên ngoài,
     # bỏ comment ở dưới sẽ thấy
     image = _pad_resize(image, shape)
     # Chồng hog và màu thành 1 vector
-    feature = np.vstack((obj_color_mean, _hog(image, shape)))
 
-    # cv2.imshow("Canny", image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    feature = np.vstack((obj_color_mean, _hog(image)))
+
     return feature
 
 # def extract_features(X, shape):
