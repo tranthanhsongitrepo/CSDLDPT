@@ -18,7 +18,8 @@ def manhattan_distance(p_vec, q_vec):
     return np.sum(np.fabs(p_vec - q_vec))
 
 
-test_images_path = 'data/mẫu 2/2.jpg'
+data_folder = "data"
+test_images_path = os.path.join(data_folder, 'mẫu 5', '1.jpg')
 shape = (256, 256)
 fig = plt.figure(figsize=(10, 7))
 
@@ -29,8 +30,8 @@ columns = 2
 
 dsts = []
 images = []
-for root, dirs, files in os.walk('data'):
-    if root == 'data':
+for root, dirs, files in os.walk(data_folder):
+    if root == data_folder:
         continue
     for name in files:
         img_path = os.path.join(root, name)

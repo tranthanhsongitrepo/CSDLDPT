@@ -5,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 def _hog(image):
-    winSize = (64, 64)
+    winSize = (128, 128)
     blockSize = (16, 16)
     blockStride = (8, 8)
     cellSize = (8, 8)
