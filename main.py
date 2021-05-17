@@ -19,12 +19,12 @@ def manhattan_distance(p_vec, q_vec):
 
 
 data_folder = "data"
-test_images_path = os.path.join(data_folder, 'mẫu 5', '1.jpg')
+test_images_path = os.path.join(data_folder, 'mẫu 6', '2.jpg')
 shape = (256, 256)
 fig = plt.figure(figsize=(10, 7))
 
 test_img = cv2.imread(test_images_path)
-ft1 = extract_features(test_img, shape)
+color_mean_test, hog_test = extract_features(test_img, shape)
 rows = 6
 columns = 2
 
@@ -36,13 +36,15 @@ for root, dirs, files in os.walk(data_folder):
     for name in files:
         img_path = os.path.join(root, name)
         img = cv2.imread(img_path)
-        ft2 = extract_features(img, shape, img_path)
-        cur_dst = cosine_similarity(ft1, ft2)
-        dsts.append(cur_dst)
+        color_mean, hog = extract_features(img, shape, img_path)
+
+        color_dst = cosine_similarity(color_mean, color_mean_test)
+        hog_dst = cosine_similarity(hog_test, hog)
+        dsts.append(color_dst + hog_dst)
         images.append(img_path)
 
-images = np.array(images)
 dsts = np.array(dsts)
+images = np.array(images)
 
 top_ten = images[dsts.argsort()][1:11]
 

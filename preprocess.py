@@ -4,8 +4,8 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 
-def _hog(image):
-    winSize = (128, 128)
+def _hog(image, shape):
+    winSize = shape
     blockSize = (16, 16)
     blockStride = (8, 8)
     cellSize = (8, 8)
@@ -20,10 +20,7 @@ def _hog(image):
     # image = cv2.cvtColor(image, 0)
     hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, nbins, derivAperture, winSigma,
                             histogramNormType, L2HysThreshold, gammaCorrection, nlevels)
-    winStride = (8, 8)
-    padding = (8, 8)
-    locations = ((10, 20),)
-    hist = hog.compute(image, winStride, padding, locations)
+    hist = hog.compute(image)
     return hist
 
 
@@ -33,6 +30,7 @@ def _extract_object(image):
     image_cpy = cv2.threshold(image_cpy, 60, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
     image_cpy = cv2.bitwise_not(image_cpy)
+
     # Cut just the object out
     sums = image_cpy.sum(axis=0)
     t = np.where(sums != 0)
@@ -41,12 +39,12 @@ def _extract_object(image):
     t = np.where(sums != 0)
     y1, y2 = t[0][0], t[0][-1]
 
-    return image[y1:y2, x1:x2]
+    return image[np.maximum(y1 - 1, 0):np.maximum(y2 - 1, 0), np.maximum(x1 - 1, 0):np.maximum(x2 - 1, 0)]
 
 
 def _get_color_mean(image):
     # Lấy trung bình 3 từng kênh L*, a*, b*
-    lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     obj_color_mean = np.array(lab.mean(axis=(0, 1))[:3])
     obj_color_mean = obj_color_mean.reshape((-1, 1))
 
@@ -55,8 +53,6 @@ def _get_color_mean(image):
 
 def _pad_resize(image, shape):
     image = cv2.resize(image, (shape[1], shape[0]))
-    image = cv2.copyMakeBorder(image, 1, 1, 1, 1, cv2.BORDER_CONSTANT, value=(0, 0, 0))
-
     return image
 
 
@@ -72,7 +68,7 @@ def extract_features(image, shape, name=""):
     image = _pad_resize(image, shape)
     # Chồng hog và màu thành 1 vector
 
-    feature = np.vstack((obj_color_mean, _hog(image)))
+    feature = obj_color_mean, _hog(image, shape)
 
     return feature
 
