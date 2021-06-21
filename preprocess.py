@@ -1,7 +1,8 @@
 # importing required libraries
 import cv2
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+import os
+import pandas as pd
 
 
 def _hog(image, shape):
@@ -72,6 +73,7 @@ def extract_features(image, shape, name=""):
 
     return feature
 
+
 # def extract_features(X, shape):
 #     all_features = []
 #     for x in X:
@@ -82,3 +84,26 @@ def extract_features(image, shape, name=""):
 #     scaler.fit(all_features)
 #     res = scaler.transform(all_features)
 #     return res
+
+
+def to_csv(path):
+    data_folder = "data"
+    shape = (256, 256)
+    data = []
+    cols = None
+    for name in os.listdir(data_folder):
+        img_path = os.path.join(data_folder, name)
+        img = cv2.imread(img_path)
+        color_mean, hog = extract_features(img, shape, img_path)
+
+        if cols is None:
+            cols = ['name']
+            cols += ['color_' + str(i) for i in range(color_mean.shape[0])]
+            cols += ['hog_' + str(i) for i in range(hog.shape[0])]
+
+        row = np.vstack((name, color_mean, hog))
+
+        data.append(row)
+
+    df = pd.DataFrame(np.array(data).reshape((len(data), -1)), columns=cols)
+    df.to_csv(path)
