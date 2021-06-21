@@ -19,7 +19,7 @@ def manhattan_distance(p_vec, q_vec):
     return np.sum(np.fabs(p_vec - q_vec))
 
 
-# to_csv('precomputed')
+to_csv('precomputed')
 
 train_folder = 'data/train'
 test_folder = 'data/test'
@@ -28,7 +28,8 @@ df = pd.read_csv('data.csv')
 shape = (256, 256)
 
 test_img = cv2.imread(os.path.join(test_folder, test_images_path))
-test_color_mean, test_hog = extract_features(test_img, shape)
+test_color_mean, test_color_std, test_hog = extract_features(test_img, shape)
+print(test_color_mean, test_hog)
 
 fig = plt.figure(figsize=(10, 7))
 rows = 6
@@ -40,10 +41,12 @@ images = []
 
 for idx, row in df.iterrows():
     color_mean = np.load(row[2])
-    hog_mean = np.load(row[3])
-    color_dst = cosine_similarity(color_mean, test_color_mean)
+    color_std = np.load(row[3])
+    hog_mean = np.load(row[4])
+    color_mean_dst = cosine_similarity(color_mean, test_color_mean)
+    color_std_dst = cosine_similarity(color_std, test_color_std)
     hog_dst = cosine_similarity(hog_mean, test_hog)
-    dsts.append(color_dst + hog_dst)
+    dsts.append(color_mean_dst + hog_dst + color_std_dst)
 
     images.append(row[1])
 

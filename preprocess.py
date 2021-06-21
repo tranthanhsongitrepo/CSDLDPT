@@ -20,6 +20,7 @@ def _hog(image, shape):
     gs = np.sqrt(np.square(gx) + np.square(gy))
     phis = np.arctan(gy / (gx + 1e-6))
     phis[gx == 0] = np.pi / 2
+
     argmax_g = gs.argmax(axis=-1)
 
     # lấy ra g, phi mà tại đó g max
@@ -44,8 +45,8 @@ def _hog(image, shape):
                     value_1 = (phi_pixel - a) / 20 * g_pixel
                     value_2 = (b - phi_pixel) / 20 * g_pixel
 
-                    bins[bin_index] += value_1
-                    bins[(bin_index + 1) % 9] += value_2
+                    bins[bin_index] += value_2
+                    bins[(bin_index + 1) % 9] += value_1
 
             histogram[int(i / cell_size), int(j / cell_size), :] = bins
 
@@ -104,6 +105,14 @@ def _get_color_mean(image):
     return obj_color_mean
 
 
+def _get_color_std(image):
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    obj_color_std = np.array(lab.std(axis=(0, 1))[:3])
+    obj_color_std = obj_color_std.reshape((-1, 1))
+
+    return obj_color_std
+
+
 def _pad_resize(image, shape):
     image = cv2.resize(image, (shape[1], shape[0]))
     return image
@@ -114,13 +123,13 @@ def extract_features(image, shape, name=""):
     image = _extract_object(image)
 
     obj_color_mean = _get_color_mean(image)
-
+    obj_color_std = _get_color_std(image)
     # Resize về cùng một cỡ và đệm 1 vòng pixel 0 bên ngoài,
     # bỏ comment ở dưới sẽ thấy
     image = _pad_resize(image, shape)
     # Chồng hog và màu thành 1 vector
 
-    feature = obj_color_mean, _hog(image, shape)
+    feature = obj_color_mean, obj_color_std, _hog(image, shape)
 
     return feature
 
@@ -138,19 +147,20 @@ def extract_features(image, shape, name=""):
 
 
 def to_csv(path):
-    data_folder = "data/train"
+    train_folder = "data/train"
     shape = (256, 256)
     data = []
 
-    for name in os.listdir(data_folder):
-        img_path = os.path.join(data_folder, name)
+    for name in os.listdir(train_folder):
+        img_path = os.path.join(train_folder, name)
         img = cv2.imread(img_path)
-        color_mean, hog = extract_features(img, shape, img_path)
-
+        color_mean, color_std, hog = extract_features(img, shape, img_path)
         color_mean_output_path = os.path.join(path, 'color_mean_' + name.split('.')[0] + '.npy')
+        color_std_output_path = os.path.join(path, 'color_out_' + name.split('.')[0] + '.npy')
         hog_output_path = os.path.join(path, 'hog_' + name.split('.')[0] + '.npy')
 
         np.save(color_mean_output_path, color_mean)
+        np.save(color_std_output_path, color_std)
         np.save(hog_output_path, hog)
 
         # if cols is None:
@@ -158,7 +168,7 @@ def to_csv(path):
         #     cols += ['color_' + str(i) for i in range(color_mean.shape[0])]
         #     cols += ['hog_' + str(i) for i in range(hog.shape[0])]
 
-        data.append([name, color_mean_output_path, hog_output_path])
+        data.append([name, color_mean_output_path, color_std_output_path, hog_output_path])
 
-    df = pd.DataFrame(data, columns=['name', 'color_mean', 'hog'])
+    df = pd.DataFrame(data, columns=['name', 'color_mean', 'color_std', 'hog'])
     df.to_csv('data.csv')
